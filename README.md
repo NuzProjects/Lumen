@@ -43,8 +43,3 @@ docker compose down
 - Search, channel, and video metadata are cached in memory to avoid repeat upstream work.
 - The upstream queue defaults to three active `yt-dlp` workers. Set `YTDLP_CONCURRENCY` to a value from 1 to 4 to tune it for your connection and rate-limit tolerance.
 - Docker restarts the service automatically unless it is deliberately stopped.
-
-## Notes
-
-- `.env.local` is excluded from Git and Docker build context. Never commit API keys.
-- Public YouTube and Invidious availability can change. The app falls back to `yt-dlp` if no configured Invidious instance is available.
