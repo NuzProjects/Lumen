@@ -46,7 +46,7 @@ docker compose down
 
 ## Create a YouTube Data API key
 
-Lumen uses the YouTube Data API v3 for fast search and official public channel metadata. The key stays server-side in `.env.local`.
+Lumen uses the YouTube Data API v3 for fast search and official public channel metadata. The key is free to create and use.
 
 1. Open the [Google Cloud Console](https://console.cloud.google.com/), create or select a project, and enable **YouTube Data API v3** from **APIs & Services → Library**.
 2. Go to **APIs & Services → Credentials → Create credentials → API key**.
@@ -58,5 +58,3 @@ Lumen uses the YouTube Data API v3 for fast search and official public channel m
    ```
 
 5. Restart the app or run `docker compose up --build -d` again.
-
-Never paste the key into client-side code or commit `.env.local`. It is already excluded by `.gitignore`.
