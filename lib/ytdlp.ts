@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import { join } from 'node:path'
 import { getInvidiousVideo, searchInvidious } from '@/lib/invidious'
-import { getYouTubeChannelProfile } from '@/lib/youtube-api'
+import { getYouTubeChannelProfile, searchYouTubeVideos } from '@/lib/youtube-api'
 import { cached } from '@/lib/cache'
 
 // yt-dlp may live in a few places depending on the environment.
@@ -239,6 +239,9 @@ export async function search(
   query: string,
   limit = 20,
 ): Promise<VideoSummary[]> {
+  const apiResults = await searchYouTubeVideos(query, limit)
+  if (apiResults?.length) return apiResults
+
   const invidiousResults = await searchInvidious(query, limit)
   if (invidiousResults) return invidiousResults
 

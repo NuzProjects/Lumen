@@ -37,9 +37,15 @@ export function VideoGrid({ videos }: { videos: VideoSummary[] }) {
     observer.observe(sentinel)
     return () => {
       observer.disconnect()
-      if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [hasMore, loadingMore, videos.length])
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    },
+    [],
+  )
 
   return (
     <>

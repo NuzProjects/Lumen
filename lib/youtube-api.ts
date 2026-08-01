@@ -83,6 +83,52 @@ export async function getPopularYouTubeVideos(
   }
 }
 
+export async function searchYouTubeVideos(
+  query: string,
+  limit: number,
+): Promise<YouTubeVideoSummary[] | null> {
+  const key = process.env.YOUTUBE_API_KEY
+  if (!key) return null
+  const url = new URL('https://www.googleapis.com/youtube/v3/search')
+  url.searchParams.set('part', 'snippet')
+  url.searchParams.set('type', 'video')
+  url.searchParams.set('order', 'relevance')
+  url.searchParams.set('maxResults', String(Math.min(limit, 50)))
+  url.searchParams.set('q', query)
+  url.searchParams.set('key', key)
+
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(10_000) })
+    if (!response.ok) return null
+    const payload = (await response.json()) as {
+      items?: Array<{
+        id?: { videoId?: string }
+        snippet?: { title?: string; channelTitle?: string; channelId?: string; publishedAt?: string; thumbnails?: { high?: { url?: string }; medium?: { url?: string } } }
+      }>
+    }
+    const results: YouTubeVideoSummary[] = []
+    for (const item of payload.items || []) {
+      const id = item.id?.videoId
+      if (!id) continue
+      results.push({
+        id,
+        title: item.snippet?.title || 'Untitled',
+        channel: item.snippet?.channelTitle || 'Unknown channel',
+        channelId: item.snippet?.channelId,
+        duration: null,
+        durationText: '',
+        viewCount: null,
+        viewCountText: '',
+        uploadedText: item.snippet?.publishedAt ? relativeDate(item.snippet.publishedAt) : '',
+        thumbnail: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.medium?.url || '',
+      })
+    }
+    return results
+  } catch {
+    return null
+  }
+}
+
 export async function getYouTubeChannelProfile(
   id: string,
 ): Promise<YouTubeChannelProfile | null> {
