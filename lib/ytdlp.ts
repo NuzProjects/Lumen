@@ -19,9 +19,12 @@ const YTDLP_CANDIDATES = [
 ].filter(Boolean) as string[]
 
 let cachedBin: string | null = null
-// One small self-hosted instance should make one upstream request at a time.
-// Cached requests are still served immediately without entering this queue.
-const MAX_CONCURRENT_REQUESTS = 1
+// Allow a few workers for a self-hosted instance. Cached requests still bypass
+// this queue, and the cap keeps upstream bursts under control.
+const MAX_CONCURRENT_REQUESTS = Math.min(
+  4,
+  Math.max(1, Number.parseInt(process.env.YTDLP_CONCURRENCY || '3', 10) || 3),
+)
 let activeRequests = 0
 const waitingRequests: Array<() => void> = []
 

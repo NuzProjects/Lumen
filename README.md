@@ -1,6 +1,6 @@
 # Lumen
 
-Lumen is a private, self-hosted video discovery interface. It is set up for one person or a small private household: it keeps local results warm, makes one upstream `yt-dlp` request at a time, and uses the official YouTube Data API only for public channel artwork and metadata.
+Lumen is a private, self-hosted video discovery interface. It is set up for one person or a small private household: it keeps local results warm, runs up to three upstream `yt-dlp` workers, and uses the official YouTube Data API only for public channel artwork and metadata.
 
 ## Run with Docker (recommended)
 
@@ -41,7 +41,7 @@ docker compose down
 
 - For You refreshes frequently but rotates a cached candidate pool.
 - Search, channel, and video metadata are cached in memory to avoid repeat upstream work.
-- The upstream queue is intentionally limited to one active `yt-dlp` process. This avoids rate-limit bursts on a small personal instance.
+- The upstream queue defaults to three active `yt-dlp` workers. Set `YTDLP_CONCURRENCY` to a value from 1 to 4 to tune it for your connection and rate-limit tolerance.
 - Docker restarts the service automatically unless it is deliberately stopped.
 
 ## Notes
