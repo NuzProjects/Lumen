@@ -16,6 +16,7 @@ export interface VideoDetail extends VideoSummary {
   streamUrl: string | null
   hasStream: boolean
   formats: { url: string; height: number | null; label: string }[]
+  isShort: boolean
 }
 
 export const CATEGORY_LIST = [

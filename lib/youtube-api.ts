@@ -35,6 +35,20 @@ function relativeDate(date: string): string {
   return `${Math.floor(days / 365)}y ago`
 }
 
+function parseIsoDuration(value: string | undefined): number | null {
+  if (!value) return null
+  const match = value.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/)
+  if (!match) return null
+  return Number(match[1] || 0) * 3600 + Number(match[2] || 0) * 60 + Number(match[3] || 0)
+}
+
+function formatDuration(seconds: number | null): string {
+  if (!seconds) return ''
+  const minutes = Math.floor(seconds / 60)
+  const remainder = Math.floor(seconds % 60).toString().padStart(2, '0')
+  return `${minutes}:${remainder}`
+}
+
 export async function getPopularYouTubeVideos(
   limit = 24,
 ): Promise<YouTubeVideoSummary[] | null> {
@@ -124,6 +138,71 @@ export async function searchYouTubeVideos(
       })
     }
     return results
+  } catch {
+    return null
+  }
+}
+
+const SHORTS_QUERIES = [
+  'funny shorts', 'science shorts', 'gaming shorts', 'music shorts',
+  'art shorts', 'animals shorts', 'coding shorts', 'sports shorts',
+]
+
+/** A fresh, randomly themed set of videos that YouTube classifies as short. */
+export async function getRandomYouTubeShorts(limit = 18, interests: string[] = []): Promise<YouTubeVideoSummary[] | null> {
+  const key = process.env.YOUTUBE_API_KEY
+  if (!key) return null
+
+  const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search')
+  searchUrl.searchParams.set('part', 'snippet')
+  searchUrl.searchParams.set('type', 'video')
+  searchUrl.searchParams.set('videoDuration', 'short')
+  // Recent view leaders are a better approximation of what is trending than
+  // the default relevance ordering, which often surfaces older Shorts.
+  searchUrl.searchParams.set('order', 'viewCount')
+  searchUrl.searchParams.set('publishedAfter', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+  searchUrl.searchParams.set('maxResults', String(Math.min(50, Math.max(limit * 2, 24))))
+  const safeInterests = interests.filter((interest) => /^[\w\s-]{2,48}$/i.test(interest))
+  searchUrl.searchParams.set('q', `${safeInterests[Math.floor(Math.random() * safeInterests.length)] || SHORTS_QUERIES[Math.floor(Math.random() * SHORTS_QUERIES.length)]} shorts`)
+  searchUrl.searchParams.set('key', key)
+
+  try {
+    const response = await fetch(searchUrl, { signal: AbortSignal.timeout(12_000) })
+    if (!response.ok) return null
+    const payload = (await response.json()) as { items?: Array<{ id?: { videoId?: string }; snippet?: { title?: string; channelTitle?: string; channelId?: string; publishedAt?: string; thumbnails?: { high?: { url?: string }; medium?: { url?: string } } } }> }
+    const ids = (payload.items || []).map((item) => item.id?.videoId).filter((id): id is string => Boolean(id))
+    if (!ids.length) return []
+
+    const detailsUrl = new URL('https://www.googleapis.com/youtube/v3/videos')
+    detailsUrl.searchParams.set('part', 'contentDetails,statistics')
+    detailsUrl.searchParams.set('id', ids.join(','))
+    detailsUrl.searchParams.set('key', key)
+    const detailsResponse = await fetch(detailsUrl, { signal: AbortSignal.timeout(12_000) })
+    if (!detailsResponse.ok) return null
+    const details = (await detailsResponse.json()) as { items?: Array<{ id: string; contentDetails?: { duration?: string }; statistics?: { viewCount?: string } }> }
+    const byId = new Map((details.items || []).map((item) => [item.id, item]))
+
+    return (payload.items || []).flatMap((item) => {
+      const id = item.id?.videoId
+      if (!id) return []
+      const detail = byId.get(id)
+      const duration = parseIsoDuration(detail?.contentDetails?.duration)
+      // Shorts can now be up to three minutes; exclude normal videos returned by the broad API filter.
+      if (duration == null || duration > 180) return []
+      const views = Number(detail?.statistics?.viewCount) || null
+      return [{
+        id,
+        title: item.snippet?.title || 'Untitled Short',
+        channel: item.snippet?.channelTitle || 'Unknown channel',
+        channelId: item.snippet?.channelId,
+        duration,
+        durationText: formatDuration(duration),
+        viewCount: views,
+        viewCountText: views ? formatViews(views) : '',
+        uploadedText: item.snippet?.publishedAt ? relativeDate(item.snippet.publishedAt) : '',
+        thumbnail: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.medium?.url || '',
+      }]
+    }).slice(0, limit)
   } catch {
     return null
   }

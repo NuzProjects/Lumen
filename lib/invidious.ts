@@ -75,5 +75,11 @@ export async function getInvidiousVideo(id: string): Promise<StreamInfo | null> 
     .map((format) => ({ url: format.url, height: Number.parseInt(format.qualityLabel || format.quality || '', 10) || null, label: format.qualityLabel || format.quality || 'auto' }))
   const streamUrl = formats.find((format) => format.height && format.height <= 720)?.url || formats[0]?.url || null
 
-  return { ...base, description: video.description || '', streamUrl, formats }
+  return {
+    ...base,
+    description: video.description || '',
+    streamUrl,
+    formats,
+    isShort: false,
+  }
 }

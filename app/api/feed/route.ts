@@ -39,9 +39,9 @@ export async function GET(req: NextRequest) {
 
   try {
     // Keep For You fresh while sharing category lookups between visitors.
-    const candidates = await cached(`feed:v3:${category}`, category === 'For You' ? 5 * 60_000 : 15 * 60_000, async () => {
+    const candidates = await cached(`feed:v4:${category}`, category === 'For You' ? 5 * 60_000 : 15 * 60_000, async () => {
       if (category === 'For You') {
-        const popular = await getPopularYouTubeVideos(24)
+        const popular = await getPopularYouTubeVideos(50)
         if (popular?.length) return popular as VideoSummary[]
       }
       // Query a few topics in parallel and interleave the results.

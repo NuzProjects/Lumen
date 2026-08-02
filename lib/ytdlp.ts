@@ -268,6 +268,7 @@ export interface StreamInfo extends VideoSummary {
   description: string
   streamUrl: string | null
   formats: { url: string; height: number | null; label: string }[]
+  isShort: boolean
 }
 
 export interface ChannelInfo {
@@ -373,5 +374,11 @@ async function getVideoUncached(id: string): Promise<StreamInfo> {
     description: data.description || '',
     streamUrl: preferred?.url ?? null,
     formats: progressive,
+    isShort:
+      typeof data.duration === 'number' &&
+      data.duration <= 60 &&
+      typeof data.height === 'number' &&
+      typeof data.width === 'number' &&
+      data.height > data.width,
   }
 }

@@ -2,6 +2,11 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
+/* Shorts is an immersive, self-contained viewer. */
+body:has(.shorts-page) > footer {
+  display: none;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

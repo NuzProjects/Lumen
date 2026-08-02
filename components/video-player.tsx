@@ -69,7 +69,12 @@ export function VideoPlayer({ video }: { video: VideoDetail }) {
   }
 
   return (
-    <div ref={playerRef} className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black">
+    <div
+      ref={playerRef}
+      className={`relative w-full overflow-hidden rounded-2xl border border-border bg-black ${
+        video.isShort ? 'mx-auto aspect-[9/16] max-w-sm' : 'aspect-video'
+      }`}
+    >
       {!ready && !noStream && !failed && (
         <div className="absolute inset-0 z-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}

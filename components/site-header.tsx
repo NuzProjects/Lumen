@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
-import { Search, Play, X } from 'lucide-react'
+import { Clapperboard, Search, Play, X } from 'lucide-react'
 
 export function SiteHeader() {
   const router = useRouter()
@@ -65,7 +65,14 @@ export function SiteHeader() {
           </div>
         </form>
 
-        <div className="hidden w-8 shrink-0 sm:block" aria-hidden />
+        <Link
+          href="/shorts"
+          aria-label="Browse Shorts"
+          className="liquid-glass flex h-11 shrink-0 items-center gap-2 rounded-full px-3 text-sm font-medium text-foreground"
+        >
+          <Clapperboard className="h-4 w-4" aria-hidden />
+          <span className="hidden sm:block">Shorts</span>
+        </Link>
       </div>
     </header>
   )
