@@ -36,13 +36,42 @@ function shuffle<T>(arr: T[]): T[] {
 export async function GET(req: NextRequest) {
   const category = req.nextUrl.searchParams.get('category') || 'For You'
   const queries = CATEGORIES[category] || CATEGORIES['For You']
+  const interests = (req.nextUrl.searchParams.get('topics') || '')
+    .split(',')
+    .map((topic) => topic.trim())
+    .filter((topic) => /^[\w\s-]{2,48}$/i.test(topic))
+    .slice(0, 4)
 
   try {
     // Keep For You fresh while sharing category lookups between visitors.
-    const candidates = await cached(`feed:v4:${category}`, category === 'For You' ? 5 * 60_000 : 15 * 60_000, async () => {
+    const candidates = await cached(`feed:v7:${category}:${interests.join('|').toLowerCase()}`, category === 'For You' ? 5 * 60_000 : 15 * 60_000, async () => {
       if (category === 'For You') {
         const popular = await getPopularYouTubeVideos(50)
-        if (popular?.length) return popular as VideoSummary[]
+        if (popular?.length) {
+          // Search both a watched creator and the watched video's subject.
+          // This keeps a few direct matches while surfacing related creators.
+          const personalBatches = await Promise.allSettled(interests.map((topic) => search(topic, 12)))
+          const personalLists = personalBatches
+            .filter((batch): batch is PromiseFulfilledResult<VideoSummary[]> => batch.status === 'fulfilled')
+            .map((batch) => batch.value)
+          const seen = new Set<string>()
+          const channelCounts = new Map<string, number>()
+          const personalized: VideoSummary[] = []
+          const maxLength = Math.max(0, ...personalLists.map((list) => list.length))
+          for (let index = 0; index < maxLength; index++) {
+            for (const list of personalLists) {
+              const video = list[index]
+              const channelKey = video?.channelId || video?.channel || ''
+              if (video && !seen.has(video.id) && (channelCounts.get(channelKey) || 0) < 3) {
+                seen.add(video.id)
+                channelCounts.set(channelKey, (channelCounts.get(channelKey) || 0) + 1)
+                personalized.push(video)
+              }
+            }
+          }
+          if (personalized.length >= 8) return personalized
+          return popular as VideoSummary[]
+        }
       }
       // Query a few topics in parallel and interleave the results.
       const picked = shuffle(queries).slice(0, 3)

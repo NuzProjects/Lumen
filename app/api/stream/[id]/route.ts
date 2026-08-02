@@ -8,18 +8,19 @@ export const maxDuration = 300
 const ID_RE = /^[a-zA-Z0-9_-]{6,20}$/
 
 // Small in-memory cache so we don't re-run yt-dlp for every range request.
-const urlCache = new Map<string, { url: string; expires: number }>()
+const urlCache = new Map<string, { url: string; title: string; expires: number }>()
 
-async function resolveStreamUrl(id: string): Promise<string | null> {
+async function resolveStreamUrl(id: string): Promise<{ url: string; title: string } | null> {
   const cached = urlCache.get(id)
-  if (cached && cached.expires > Date.now()) return cached.url
+  if (cached && cached.expires > Date.now()) return cached
 
   const video = await getVideo(id)
   if (!video.streamUrl) return null
 
   // googlevideo urls carry their own expiry; cache for a conservative window.
-  urlCache.set(id, { url: video.streamUrl, expires: Date.now() + 60 * 60 * 1000 })
-  return video.streamUrl
+  const resolved = { url: video.streamUrl, title: video.title, expires: Date.now() + 60 * 60 * 1000 }
+  urlCache.set(id, resolved)
+  return resolved
 }
 
 export async function GET(
@@ -31,15 +32,15 @@ export async function GET(
     return new NextResponse('Invalid id', { status: 400 })
   }
 
-  let sourceUrl: string | null
+  let source: { url: string; title: string } | null
   try {
-    sourceUrl = await resolveStreamUrl(id)
+    source = await resolveStreamUrl(id)
   } catch (err) {
     console.log('[v0] stream resolve error:', (err as Error).message)
     return new NextResponse('Upstream unavailable', { status: 502 })
   }
 
-  if (!sourceUrl) {
+  if (!source) {
     return new NextResponse('No playable stream', { status: 404 })
   }
 
@@ -53,7 +54,7 @@ export async function GET(
 
   let upstream: Response
   try {
-    upstream = await fetch(sourceUrl, { headers: upstreamHeaders })
+    upstream = await fetch(source.url, { headers: upstreamHeaders })
   } catch (err) {
     console.log('[v0] stream fetch error:', (err as Error).message)
     return new NextResponse('Upstream fetch failed', { status: 502 })
@@ -73,6 +74,14 @@ export async function GET(
   const contentRange = upstream.headers.get('content-range')
   if (contentRange) headers.set('Content-Range', contentRange)
   headers.set('Cache-Control', 'private, max-age=3600')
+  if (req.nextUrl.searchParams.get('download') === '1') {
+    const filename = source.title
+      .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 120) || `lumen-${id}`
+    headers.set('Content-Disposition', `attachment; filename="${filename}.mp4"`)
+  }
 
   return new NextResponse(upstream.body, {
     status: upstream.status,

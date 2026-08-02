@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
 import useSWR from 'swr'
 import { AlertTriangle, RefreshCw, SearchX } from 'lucide-react'
 import { fetcher, type VideoSummary } from '@/lib/types'
@@ -17,6 +18,15 @@ export function SearchResults() {
   )
 
   const videos = data?.results ?? []
+  useEffect(() => {
+    if (!q) return
+    try {
+      const existing = JSON.parse(localStorage.getItem('lumen-search-history') || '[]') as string[]
+      localStorage.setItem('lumen-search-history', JSON.stringify([q, ...existing.filter((item) => item.toLowerCase() !== q.toLowerCase())].slice(0, 20)))
+    } catch {
+      localStorage.setItem('lumen-search-history', JSON.stringify([q]))
+    }
+  }, [q])
   const channels = Array.from(
     new Map(
       videos.map((video) => [
@@ -27,7 +37,13 @@ export function SearchResults() {
   ).slice(0, 8)
 
   if (!q) {
-    return <p className="py-24 text-center text-sm text-muted-foreground">Type something in the search bar to begin.</p>
+    return (
+      <div className="flex flex-col items-center gap-3 py-24 text-center">
+        <SearchX className="h-8 w-8 text-muted-foreground" />
+        <p className="text-base font-medium text-foreground">Start searching to build your personalization</p>
+        <p className="max-w-sm text-sm text-muted-foreground">Searches help Lumen find more videos you&apos;ll want to watch.</p>
+      </div>
+    )
   }
 
   return (

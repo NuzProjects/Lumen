@@ -27,8 +27,12 @@ function formatViews(count: number): string {
 }
 
 function relativeDate(date: string): string {
-  const days = Math.max(0, Math.floor((Date.now() - Date.parse(date)) / 86_400_000))
-  if (days === 0) return 'today'
+  const elapsed = Math.max(0, Date.now() - Date.parse(date))
+  const minutes = Math.floor(elapsed / 60_000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const days = Math.floor(elapsed / 86_400_000)
+  if (days === 0) return `${Math.floor(minutes / 60)}h ago`
   if (days < 7) return `${days}d ago`
   if (days < 30) return `${Math.floor(days / 7)}w ago`
   if (days < 365) return `${Math.floor(days / 30)}mo ago`

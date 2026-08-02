@@ -1,18 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import useSWR from 'swr'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { AlertTriangle, RefreshCw, Search } from 'lucide-react'
 import { CATEGORY_LIST, fetcher, type VideoSummary } from '@/lib/types'
 import { VideoGrid, VideoGridSkeleton } from '@/components/video-grid'
 
-const feedKey = (cat: string) => `/api/feed?category=${encodeURIComponent(cat)}`
+const feedKey = (cat: string, topics: string[]) => `/api/feed?category=${encodeURIComponent(cat)}${topics.length ? `&topics=${encodeURIComponent(topics.join(','))}` : ''}`
 
 export function ForYouFeed() {
   const [category, setCategory] = useState<string>('For You')
+  const [hasSearchHistory, setHasSearchHistory] = useState<boolean | null>(null)
+  const [profileTopics, setProfileTopics] = useState<string[]>([])
+  useEffect(() => {
+    try {
+      const searches = JSON.parse(localStorage.getItem('lumen-search-history') || '[]') as string[]
+      const watched = JSON.parse(localStorage.getItem('lumen-watch-history') || '[]') as Array<string | { channel?: string; title?: string }>
+      const signals = watched.map((item) => typeof item === 'string' ? { channel: item, title: '' } : item)
+      const channels = [...new Set(signals.map((signal) => signal.channel).filter((topic): topic is string => Boolean(topic)))].slice(0, 2)
+      const subjects = [...new Set(signals.map((signal) => {
+        const channelWords = new Set((signal.channel || '').toLowerCase().split(/\s+/))
+        return (signal.title || '').split(/\s+/).filter((word) => word.length >= 4 && !channelWords.has(word.toLowerCase()) && !['official', 'video', 'with', 'from', 'this', 'that'].includes(word.toLowerCase())).slice(0, 6).join(' ')
+      }).filter(Boolean))].slice(0, 2)
+      const watchedTopics = [...channels, ...subjects]
+      setHasSearchHistory(searches.length > 0 || watchedTopics.length > 0)
+      setProfileTopics([...new Set([...watchedTopics, ...searches])].slice(0, 4))
+    } catch {
+      setHasSearchHistory(false)
+    }
+  }, [])
   const { data, error, isLoading, mutate, isValidating } = useSWR<{
     results: VideoSummary[]
-  }>(feedKey(category), fetcher, {
+  }>(feedKey(category, category === 'For You' ? profileTopics : []), fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 5 * 60_000,
     keepPreviousData: true,
@@ -20,6 +39,7 @@ export function ForYouFeed() {
 
   const videos = data?.results ?? []
   const showSkeleton = isLoading && videos.length === 0
+  const showForYouOnboarding = category === 'For You' && hasSearchHistory === false
 
   return (
     <section>
@@ -45,9 +65,17 @@ export function ForYouFeed() {
         </div>
       </div>
 
-      {showSkeleton && <VideoGridSkeleton count={12} />}
+      {showForYouOnboarding && (
+        <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 text-center">
+          <span className="grid h-12 w-12 place-items-center rounded-full bg-secondary text-muted-foreground"><Search className="h-5 w-5" /></span>
+          <p className="text-base font-medium text-foreground">Start searching to build your personalization</p>
+          <p className="max-w-sm text-sm text-muted-foreground">Your searches help Lumen tailor the For You feed to your interests.</p>
+        </div>
+      )}
 
-      {!showSkeleton && error && !videos.length && (
+      {!showForYouOnboarding && showSkeleton && <VideoGridSkeleton count={12} />}
+
+      {!showForYouOnboarding && !showSkeleton && error && !videos.length && (
         <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-6 py-16 text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/15 text-destructive">
             <AlertTriangle className="h-6 w-6" />
@@ -68,7 +96,7 @@ export function ForYouFeed() {
         </div>
       )}
 
-      {!showSkeleton && videos.length > 0 && (
+      {!showForYouOnboarding && !showSkeleton && videos.length > 0 && (
         <div
           className={`transition-opacity duration-300 ${
             isValidating ? 'opacity-60' : 'opacity-100'
@@ -78,13 +106,13 @@ export function ForYouFeed() {
         </div>
       )}
 
-      {!showSkeleton && !error && videos.length === 0 && (
+      {!showForYouOnboarding && !showSkeleton && !error && videos.length === 0 && (
         <p className="py-16 text-center text-sm text-muted-foreground">
           No videos found for this category.
         </p>
       )}
 
-      {isValidating && !isLoading && (
+      {!showForYouOnboarding && isValidating && !isLoading && (
         <div className="mt-6 flex justify-center">
           <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
             <RefreshCw className="h-3 w-3 animate-spin" />

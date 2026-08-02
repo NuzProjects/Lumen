@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { AlertTriangle, Loader2, Maximize, Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { AlertTriangle, Download, Loader2, Maximize, Play, Volume2, VolumeX } from 'lucide-react'
 import { type VideoDetail, thumbUrl } from '@/lib/types'
 
 function formatTime(seconds: number): string {
@@ -24,6 +24,7 @@ export function VideoPlayer({ video }: { video: VideoDetail }) {
   const [ended, setEnded] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const playerRef = useRef<HTMLDivElement>(null)
+  const recordedViewRef = useRef(false)
   const noStream = !video.hasStream || !video.streamUrl
 
   const togglePlayback = async () => {
@@ -100,7 +101,19 @@ export function VideoPlayer({ video }: { video: VideoDetail }) {
               setPlaying(false)
               setEnded(true)
             }}
-            onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+            onTimeUpdate={(event) => {
+              const watched = event.currentTarget.currentTime
+              setCurrentTime(watched)
+              if (watched >= 10 && !recordedViewRef.current) {
+                recordedViewRef.current = true
+                try {
+                  const history = JSON.parse(localStorage.getItem('lumen-watch-history') || '[]') as Array<string | { channel?: string; title?: string }>
+                  const signal = { channel: video.channel, title: video.title.replace(/[^\w\s-]/g, ' ').slice(0, 48) }
+                  const remaining = history.filter((item) => typeof item === 'string' ? item !== video.channel : item.channel !== video.channel)
+                  localStorage.setItem('lumen-watch-history', JSON.stringify([signal, ...remaining].slice(0, 12)))
+                } catch { /* Browsing should still work when storage is unavailable. */ }
+              }
+            }}
             onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
             onError={() => setFailed(true)}
             onClick={togglePlayback}
@@ -127,7 +140,12 @@ export function VideoPlayer({ video }: { video: VideoDetail }) {
               />
               <div className="flex items-center gap-3 text-white">
                 <button type="button" onClick={togglePlayback} aria-label={playing ? 'Pause' : 'Play'} className="grid h-8 w-8 cursor-pointer place-items-center rounded-full hover:bg-white/10">
-                  {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                  {playing ? (
+                    <span className="flex items-center gap-1" aria-hidden>
+                      <span className="h-4 w-1 rounded-full bg-current" />
+                      <span className="h-4 w-1 rounded-full bg-current" />
+                    </span>
+                  ) : <Play className="h-5 w-5 translate-x-px fill-current" />}
                 </button>
                 <div
                   className="flex items-center"
@@ -135,7 +153,7 @@ export function VideoPlayer({ video }: { video: VideoDetail }) {
                   onMouseLeave={() => setShowVolume(false)}
                 >
                   <button type="button" onClick={toggleMuted} aria-label={muted ? 'Unmute' : 'Mute'} className="grid h-8 w-8 cursor-pointer place-items-center rounded-full hover:bg-white/10">
-                    {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                    {muted ? <VolumeX className="h-4 w-4 stroke-[2.4]" /> : <Volume2 className="h-4 w-4 stroke-[2.4]" />}
                   </button>
                   <input
                     aria-label="Volume"
@@ -154,7 +172,15 @@ export function VideoPlayer({ video }: { video: VideoDetail }) {
                   />
                 </div>
                 <span className="select-none text-xs tabular-nums text-white/85">{formatTime(currentTime)} / {formatTime(duration)}</span>
-                <button type="button" onClick={enterFullscreen} aria-label="Fullscreen" className="ml-auto grid h-8 w-8 cursor-pointer place-items-center rounded-full hover:bg-white/10">
+                <a
+                  href={`/api/stream/${video.id}?download=1`}
+                  className="ml-auto grid h-8 w-8 cursor-pointer place-items-center rounded-full hover:bg-white/10"
+                  aria-label="Download video"
+                  title="Download video"
+                >
+                  <Download className="h-4 w-4" />
+                </a>
+                <button type="button" onClick={enterFullscreen} aria-label="Fullscreen" className="grid h-8 w-8 cursor-pointer place-items-center rounded-full hover:bg-white/10">
                   <Maximize className="h-5 w-5" />
                 </button>
               </div>
