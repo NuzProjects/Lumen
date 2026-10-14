@@ -1,30 +1,32 @@
 <div align="center">
-
-  # Lumen
-
-  ### The open-source, ad-free, self-hosted YouTube frontend!
-
+  <h1>Lumen</h1>
   <p>
     <img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
     <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
     <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
     <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
   </p>
-
-  A private, lightweight video discovery and streaming interface designed for single users or private households. No ads, no trackers, and complete control over your viewing experience.
-
 </div>
 
----
+## The open-source, ad-free, self-hosted YouTube frontend!
+Lumen brings private video discovery and streaming together in one place. Stream videos with zero ads, discover tailored topics, swipe through shorts, and take complete control over your viewing experience!
+
+Many of our tools and features are requested through issues and pull requests. Have an idea or found something broken? We recommend opening an issue or making a PR to help out and contribute!
 
 ## Features
 
-- **Ad-free & Tracker-free** — Stream videos directly with zero advertisements or tracking scripts.
-- **Dedicated Shorts Feed** — Vertical swipeable shorts with keyboard controls (Space to toggle, Up/Down arrows to navigate).
-- **Privacy-Focused Personalization** — Topic suggestions and watch state stored locally in your browser rather than in the cloud.
-- **Fast Search & Channel Hubs** — Quick channel metadata, subscriber statistics, banners, and full video catalogs.
-- **Worker Pool & Caching** — In-memory TTL cache and configurable concurrency limits (`YTDLP_CONCURRENCY`) to prevent upstream rate-limiting.
-- **Docker & Windows Support** — Multi-stage Docker builds for production deployment, or run directly via Node.js.
+- Ad-free and tracker-free video playback
+- Dedicated Shorts feed with keyboard shortcuts
+- Local personalization and watch history
+- Fast search and channel hubs
+- Upstream worker pool and concurrency limiting
+- In-memory TTL caching for repeat queries
+- Docker and Node.js deployment support
+
+> [!NOTE]
+> Lumen uses the YouTube Data API strictly for fast public metadata and channel artwork. Video streams and extraction are handled securely by upstream yt-dlp workers.
+
+> Star this repository if you are forking it, or find it useful!
 
 ---
 
@@ -114,4 +116,5 @@ Lumen can use the free YouTube Data API v3 for high-speed search and official ch
 
 ## License
 
-This project is open-source and available under the [MIT License](LICENSE).
+This project is licensed under the **MIT** license.
+See the [LICENSE](LICENSE) file for more details.
