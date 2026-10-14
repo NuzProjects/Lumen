@@ -43,59 +43,61 @@ export async function GET(req: NextRequest) {
     .slice(0, 4)
 
   try {
-
-    const candidates = await cached(`feed:v7:${category}:${interests.join('|').toLowerCase()}`, category === 'For You' ? 5 * 60_000 : 15 * 60_000, async () => {
-      if (category === 'For You') {
-        const popular = await getPopularYouTubeVideos(50)
-        if (popular?.length) {
-
-
-          const personalBatches = await Promise.allSettled(interests.map((topic) => search(topic, 12)))
-          const personalLists = personalBatches
-            .filter((batch): batch is PromiseFulfilledResult<VideoSummary[]> => batch.status === 'fulfilled')
-            .map((batch) => batch.value)
-          const seen = new Set<string>()
-          const channelCounts = new Map<string, number>()
-          const personalized: VideoSummary[] = []
-          const maxLength = Math.max(0, ...personalLists.map((list) => list.length))
-          for (let index = 0; index < maxLength; index++) {
-            for (const list of personalLists) {
-              const video = list[index]
-              const channelKey = video?.channelId || video?.channel || ''
-              if (video && !seen.has(video.id) && (channelCounts.get(channelKey) || 0) < 3) {
-                seen.add(video.id)
-                channelCounts.set(channelKey, (channelCounts.get(channelKey) || 0) + 1)
-                personalized.push(video)
+    const candidates = await cached(
+      `feed:v7:${category}:${interests.join('|').toLowerCase()}`,
+      category === 'For You' ? 5 * 60_000 : 15 * 60_000,
+      async () => {
+        if (category === 'For You') {
+          const popular = await getPopularYouTubeVideos(50)
+          if (popular?.length) {
+            const personalBatches = await Promise.allSettled(
+              interests.map((topic) => search(topic, 12)),
+            )
+            const personalLists = personalBatches
+              .filter((batch): batch is PromiseFulfilledResult<VideoSummary[]> => batch.status === 'fulfilled')
+              .map((batch) => batch.value)
+            const seen = new Set<string>()
+            const channelCounts = new Map<string, number>()
+            const personalized: VideoSummary[] = []
+            const maxLength = Math.max(0, ...personalLists.map((list) => list.length))
+            for (let index = 0; index < maxLength; index++) {
+              for (const list of personalLists) {
+                const video = list[index]
+                const channelKey = video?.channelId || video?.channel || ''
+                if (video && !seen.has(video.id) && (channelCounts.get(channelKey) || 0) < 3) {
+                  seen.add(video.id)
+                  channelCounts.set(channelKey, (channelCounts.get(channelKey) || 0) + 1)
+                  personalized.push(video)
+                }
               }
             }
-          }
-          if (personalized.length >= 8) return personalized
-          return popular as VideoSummary[]
-        }
-      }
-
-      const picked = shuffle(queries).slice(0, 3)
-      const batches = await Promise.allSettled(picked.map((q) => search(q, 8)))
-
-      const seen = new Set<string>()
-      const out: VideoSummary[] = []
-      const lists = batches
-        .filter((b) => b.status === 'fulfilled')
-        .map((b) => (b as PromiseFulfilledResult<VideoSummary[]>).value)
-
-
-      const maxLen = Math.max(0, ...lists.map((l) => l.length))
-      for (let i = 0; i < maxLen; i++) {
-        for (const list of lists) {
-          const item = list[i]
-          if (item && !seen.has(item.id)) {
-            seen.add(item.id)
-            out.push(item)
+            if (personalized.length >= 8) return personalized
+            return popular as VideoSummary[]
           }
         }
-      }
-      return out
-    })
+
+        const picked = shuffle(queries).slice(0, 3)
+        const batches = await Promise.allSettled(picked.map((q) => search(q, 8)))
+
+        const seen = new Set<string>()
+        const out: VideoSummary[] = []
+        const lists = batches
+          .filter((b) => b.status === 'fulfilled')
+          .map((b) => (b as PromiseFulfilledResult<VideoSummary[]>).value)
+
+        const maxLen = Math.max(0, ...lists.map((l) => l.length))
+        for (let i = 0; i < maxLen; i++) {
+          for (const list of lists) {
+            const item = list[i]
+            if (item && !seen.has(item.id)) {
+              seen.add(item.id)
+              out.push(item)
+            }
+          }
+        }
+        return out
+      },
+    )
 
     if (candidates.length === 0) {
       return NextResponse.json(
@@ -104,7 +106,6 @@ export async function GET(req: NextRequest) {
       )
     }
 
-
     const results = category === 'For You' ? shuffle(candidates).slice(0, 24) : candidates
 
     return NextResponse.json(
@@ -112,7 +113,7 @@ export async function GET(req: NextRequest) {
       { headers: { 'Cache-Control': category === 'For You' ? 'no-store' : 'public, max-age=300, stale-while-revalidate=300' } },
     )
   } catch (err) {
-    console.log('[v0] feed error:', (err as Error).message)
+    console.error('[lumen] Feed error:', (err as Error).message)
     return NextResponse.json(
       { category, results: [], error: (err as Error).message },
       { status: 502 },

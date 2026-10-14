@@ -26,7 +26,7 @@ export async function GET(
       hasStream: Boolean(video.streamUrl),
     })
   } catch (err) {
-    console.log('[v0] video error:', (err as Error).message)
+    console.error('[lumen] Video error:', (err as Error).message)
     return NextResponse.json(
       { error: 'Could not load video', detail: (err as Error).message },
       { status: 502 },

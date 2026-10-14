@@ -36,7 +36,7 @@ export async function GET(
   try {
     source = await resolveStreamUrl(id)
   } catch (err) {
-    console.log('[v0] stream resolve error:', (err as Error).message)
+    console.error('[lumen] Stream resolve error:', (err as Error).message)
     return new NextResponse('Upstream unavailable', { status: 502 })
   }
 
@@ -46,7 +46,6 @@ export async function GET(
 
   const range = req.headers.get('range')
   const upstreamHeaders: Record<string, string> = {
-
     'User-Agent':
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
   }
@@ -56,12 +55,11 @@ export async function GET(
   try {
     upstream = await fetch(source.url, { headers: upstreamHeaders })
   } catch (err) {
-    console.log('[v0] stream fetch error:', (err as Error).message)
+    console.error('[lumen] Stream fetch error:', (err as Error).message)
     return new NextResponse('Upstream fetch failed', { status: 502 })
   }
 
   if (!upstream.ok && upstream.status !== 206) {
-
     urlCache.delete(id)
     return new NextResponse('Upstream error', { status: 502 })
   }

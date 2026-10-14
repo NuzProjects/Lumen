@@ -1,17 +1,11 @@
 import { spawn } from 'node:child_process'
-import { join } from 'node:path'
 import { getInvidiousVideo, searchInvidious } from '@/lib/invidious'
 import { getYouTubeChannelProfile, searchYouTubeVideos } from '@/lib/youtube-api'
 import { cached } from '@/lib/cache'
 
-
 const YTDLP_CANDIDATES = [
   process.env.YTDLP_PATH,
-  process.platform === 'win32'
-    ? join(process.cwd(), 'tools', 'yt-dlp.exe')
-    : undefined,
-
-
+  process.platform === 'win32' ? 'tools\\yt-dlp.exe' : undefined,
   process.platform === 'win32' ? 'yt-dlp' : undefined,
   '/usr/local/bin/yt-dlp',
   '/usr/bin/yt-dlp',
@@ -19,7 +13,6 @@ const YTDLP_CANDIDATES = [
 ].filter(Boolean) as string[]
 
 let cachedBin: string | null = null
-
 
 const MAX_CONCURRENT_REQUESTS = Math.min(
   4,
@@ -58,14 +51,12 @@ export interface RunOptions {
   maxBuffer?: number
 }
 
-
 export async function runYtDlp(
   args: string[],
   opts: RunOptions = {},
 ): Promise<string> {
   const bin = await resolveBin()
   const { timeoutMs = 25_000, maxBuffer = 12 * 1024 * 1024 } = opts
-
 
   const baseArgs = [
     '--no-warnings',
@@ -76,7 +67,6 @@ export async function runYtDlp(
     '--socket-timeout',
     '15',
   ]
-
 
   if (process.env.YTDLP_COOKIES_FILE) {
     baseArgs.push('--cookies', process.env.YTDLP_COOKIES_FILE)
@@ -89,50 +79,50 @@ export async function runYtDlp(
 
   try {
     return await new Promise((resolve, reject) => {
-    const child = spawn(bin, [...baseArgs, ...args], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
+      const child = spawn(bin, [...baseArgs, ...args], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
 
-    let stdout = ''
-    let stderr = ''
-    let killed = false
-    let size = 0
+      let stdout = ''
+      let stderr = ''
+      let killed = false
+      let size = 0
 
-    const timer = setTimeout(() => {
-      killed = true
-      child.kill('SIGKILL')
-      reject(new Error('yt-dlp timed out'))
-    }, timeoutMs)
-
-    child.stdout.on('data', (chunk: Buffer) => {
-      size += chunk.length
-      if (size > maxBuffer) {
+      const timer = setTimeout(() => {
         killed = true
         child.kill('SIGKILL')
-        reject(new Error('yt-dlp output too large'))
-        return
-      }
-      stdout += chunk.toString()
-    })
+        reject(new Error('yt-dlp timed out'))
+      }, timeoutMs)
 
-    child.stderr.on('data', (chunk: Buffer) => {
-      stderr += chunk.toString()
-    })
+      child.stdout.on('data', (chunk: Buffer) => {
+        size += chunk.length
+        if (size > maxBuffer) {
+          killed = true
+          child.kill('SIGKILL')
+          reject(new Error('yt-dlp output too large'))
+          return
+        }
+        stdout += chunk.toString()
+      })
 
-    child.on('error', (err) => {
-      clearTimeout(timer)
-      if (!killed) reject(err)
-    })
+      child.stderr.on('data', (chunk: Buffer) => {
+        stderr += chunk.toString()
+      })
 
-    child.on('close', (code) => {
-      clearTimeout(timer)
-      if (killed) return
-      if (code === 0) {
-        resolve(stdout)
-      } else {
-        reject(new Error(stderr.trim() || `yt-dlp exited with code ${code}`))
-      }
-    })
+      child.on('error', (err) => {
+        clearTimeout(timer)
+        if (!killed) reject(err)
+      })
+
+      child.on('close', (code) => {
+        clearTimeout(timer)
+        if (killed) return
+        if (code === 0) {
+          resolve(stdout)
+        } else {
+          reject(new Error(stderr.trim() || `yt-dlp exited with code ${code}`))
+        }
+      })
     })
   } finally {
     releaseRequestSlot()
@@ -150,6 +140,32 @@ export interface VideoSummary {
   viewCountText: string
   uploadedText: string
   thumbnail: string
+}
+
+interface YtDlpRawEntry {
+  id?: string
+  title?: string
+  channel?: string
+  uploader?: string
+  channel_id?: string
+  uploader_id?: string
+  duration?: number | null
+  view_count?: number | null
+  timestamp?: number | null
+  upload_date_relative?: string
+  upload_date?: string
+  thumbnail?: string
+  thumbnails?: Array<{ url?: string }>
+}
+
+interface YtDlpRawFormat {
+  url?: string
+  vcodec?: string
+  acodec?: string
+  ext?: string
+  protocol?: string
+  height?: number | null
+  format_note?: string
 }
 
 function fmtDuration(seconds: number | null): string {
@@ -194,24 +210,22 @@ function fmtUploaded(
   return `${Math.floor(diff / (365 * day))}y ago`
 }
 
-function bestThumb(entry: any): string {
+function bestThumb(entry: YtDlpRawEntry): string {
   const id = entry.id
-
-
   if (id) return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
   if (Array.isArray(entry.thumbnails) && entry.thumbnails.length) {
-    return entry.thumbnails[entry.thumbnails.length - 1].url
+    return entry.thumbnails[entry.thumbnails.length - 1]?.url || ''
   }
   return entry.thumbnail || ''
 }
 
-export function normalizeEntry(entry: any): VideoSummary {
+export function normalizeEntry(entry: YtDlpRawEntry): VideoSummary {
   const duration =
     typeof entry.duration === 'number' ? entry.duration : null
   const viewCount =
     typeof entry.view_count === 'number' ? entry.view_count : null
   return {
-    id: entry.id,
+    id: entry.id || '',
     title: entry.title || 'Untitled',
     channel: entry.channel || entry.uploader || 'Unknown channel',
     channelId: entry.channel_id || entry.uploader_id,
@@ -227,7 +241,6 @@ export function normalizeEntry(entry: any): VideoSummary {
     thumbnail: bestThumb(entry),
   }
 }
-
 
 export async function search(
   query: string,
@@ -249,10 +262,10 @@ export async function search(
     const trimmed = line.trim()
     if (!trimmed) continue
     try {
-      const entry = JSON.parse(trimmed)
+      const entry = JSON.parse(trimmed) as YtDlpRawEntry
       if (entry && entry.id) results.push(normalizeEntry(entry))
     } catch {
-
+      // Ignore malformed output lines
     }
   }
   return results
@@ -293,7 +306,7 @@ export async function getChannel(id: string, name?: string): Promise<ChannelInfo
   const data = JSON.parse(out)
   const channelName = apiProfile?.name || data.channel || data.uploader || name || 'Channel'
   const videos = Array.isArray(data.entries)
-    ? data.entries.filter((entry: unknown) => Boolean(entry)).map(normalizeEntry)
+    ? data.entries.filter((entry: unknown) => Boolean(entry)).map((entry: YtDlpRawEntry) => normalizeEntry(entry))
     : []
   const channelVideos = (videos as VideoSummary[]).map((video) => ({
     ...video,
@@ -322,7 +335,6 @@ export async function getChannel(id: string, name?: string): Promise<ChannelInfo
   }
 }
 
-
 export async function getVideo(id: string): Promise<StreamInfo> {
   return cached(`video:${id}`, 10 * 60_000, () => getVideoUncached(id))
 }
@@ -337,27 +349,26 @@ async function getVideoUncached(id: string): Promise<StreamInfo> {
 
   const base = normalizeEntry(data)
 
-
-  const progressive = (data.formats || [])
+  const rawFormats: YtDlpRawFormat[] = Array.isArray(data.formats) ? data.formats : []
+  const progressive = rawFormats
     .filter(
-      (f: any) =>
-        f.url &&
-        f.vcodec &&
+      (f): f is YtDlpRawFormat & { url: string } =>
+        Boolean(f.url) &&
+        Boolean(f.vcodec) &&
         f.vcodec !== 'none' &&
-        f.acodec &&
+        Boolean(f.acodec) &&
         f.acodec !== 'none' &&
         (f.ext === 'mp4' || f.protocol === 'https'),
     )
-    .map((f: any) => ({
-      url: f.url as string,
-      height: (f.height as number) ?? null,
+    .map((f) => ({
+      url: f.url,
+      height: (typeof f.height === 'number' ? f.height : null),
       label: f.height ? `${f.height}p` : f.format_note || 'auto',
     }))
-    .sort((a: any, b: any) => (b.height ?? 0) - (a.height ?? 0))
-
+    .sort((a, b) => (b.height ?? 0) - (a.height ?? 0))
 
   const preferred =
-    progressive.find((f: any) => f.height && f.height <= 720) ||
+    progressive.find((f) => f.height && f.height <= 720) ||
     progressive[0] ||
     null
 

@@ -52,7 +52,6 @@ export function ChannelView({ id, name }: { id: string; name: string }) {
           <header className="mb-8 overflow-hidden rounded-2xl border border-border bg-card">
             {data.banner && (
               <div className="h-40 sm:h-52">
-                
                 <img
                   src={data.banner}
                   alt=""

@@ -78,7 +78,6 @@ export function VideoPlayer({ video }: { video: VideoDetail }) {
     >
       {!ready && !noStream && !failed && (
         <div className="absolute inset-0 z-10">
-
           <img src={thumbUrl(video.id) || '/placeholder.svg'} alt="" className="h-full w-full scale-105 object-cover blur-md" />
           <div className="absolute inset-0 flex items-center justify-center bg-background/30">
             <Loader2 className="h-9 w-9 animate-spin text-primary" aria-label="Loading" />
@@ -111,7 +110,9 @@ export function VideoPlayer({ video }: { video: VideoDetail }) {
                   const signal = { channel: video.channel, title: video.title.replace(/[^\w\s-]/g, ' ').slice(0, 48) }
                   const remaining = history.filter((item) => typeof item === 'string' ? item !== video.channel : item.channel !== video.channel)
                   localStorage.setItem('lumen-watch-history', JSON.stringify([signal, ...remaining].slice(0, 12)))
-                } catch {                                                               }
+                } catch {
+                  // Ignore localStorage errors
+                }
               }
             }}
             onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
@@ -193,7 +194,6 @@ export function VideoPlayer({ video }: { video: VideoDetail }) {
               aria-label="Replay video"
               className="absolute inset-0 z-10 grid cursor-pointer place-items-center overflow-hidden"
             >
-
               <img src={thumbUrl(video.id) || '/placeholder.svg'} alt="" className="absolute h-full w-full scale-105 object-cover blur-md" />
               <span className="relative grid h-14 w-14 place-items-center rounded-full bg-white text-black shadow-xl">
                 <Play className="h-6 w-6 translate-x-px fill-current" />

@@ -6,7 +6,6 @@ export const metadata: Metadata = {
   title: 'Lumen',
   description:
     'Watch and search videos through a private proxy. A clean, fast, open front-end for the open web.',
-  generator: 'v0.app',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

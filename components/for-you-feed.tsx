@@ -43,7 +43,6 @@ export function ForYouFeed() {
 
   return (
     <section>
-
       <div className="-mx-4 -mt-4 mb-6 border-b border-border/60 bg-background/80 px-4 py-3 sm:-mx-6 sm:px-6">
         <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {CATEGORY_LIST.map((cat) => {

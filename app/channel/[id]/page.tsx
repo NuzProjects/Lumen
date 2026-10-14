@@ -13,7 +13,9 @@ export default async function ChannelPage({
   const { name = 'Channel' } = await searchParams
   return (
     <main className="min-h-screen bg-background">
-      <Suspense fallback={<div className="h-16 border-b border-border" />}><SiteHeader /></Suspense>
+      <Suspense fallback={<div className="h-16 border-b border-border" />}>
+        <SiteHeader />
+      </Suspense>
       <ChannelView id={id} name={name} />
     </main>
   )

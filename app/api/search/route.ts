@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       { headers: { 'Cache-Control': 'public, max-age=300, stale-while-revalidate=900' } },
     )
   } catch (err) {
-    console.log('[v0] search error:', (err as Error).message)
+    console.error('[lumen] Search error:', (err as Error).message)
     return NextResponse.json(
       { error: 'Search failed', detail: (err as Error).message, results: [] },
       { status: 502 },

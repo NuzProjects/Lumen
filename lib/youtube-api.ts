@@ -148,12 +148,20 @@ export async function searchYouTubeVideos(
 }
 
 const SHORTS_QUERIES = [
-  'funny shorts', 'science shorts', 'gaming shorts', 'music shorts',
-  'art shorts', 'animals shorts', 'coding shorts', 'sports shorts',
+  'funny shorts',
+  'science shorts',
+  'gaming shorts',
+  'music shorts',
+  'art shorts',
+  'animals shorts',
+  'coding shorts',
+  'sports shorts',
 ]
 
-
-export async function getRandomYouTubeShorts(limit = 18, interests: string[] = []): Promise<YouTubeVideoSummary[] | null> {
+export async function getRandomYouTubeShorts(
+  limit = 18,
+  interests: string[] = [],
+): Promise<YouTubeVideoSummary[] | null> {
   const key = process.env.YOUTUBE_API_KEY
   if (!key) return null
 
@@ -161,8 +169,6 @@ export async function getRandomYouTubeShorts(limit = 18, interests: string[] = [
   searchUrl.searchParams.set('part', 'snippet')
   searchUrl.searchParams.set('type', 'video')
   searchUrl.searchParams.set('videoDuration', 'short')
-
-
   searchUrl.searchParams.set('order', 'viewCount')
   searchUrl.searchParams.set('publishedAfter', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
   searchUrl.searchParams.set('maxResults', String(Math.min(50, Math.max(limit * 2, 24))))
