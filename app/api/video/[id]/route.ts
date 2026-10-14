@@ -19,7 +19,6 @@ export async function GET(
 
   try {
     const video = await getVideo(id)
-    // Don't ship raw googlevideo urls to the client — route through our proxy.
     const playable = video.streamUrl ? `/api/stream/${id}` : null
     return NextResponse.json({
       ...video,
