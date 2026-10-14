@@ -16,7 +16,6 @@ export function VideoCard({ video }: { video: VideoSummary }) {
     <article className="flex flex-col gap-3">
       <Link href={`/watch/${video.id}`} className="group relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-muted outline-none focus-visible:border-primary">
         {!errored && (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={thumbUrl(video.id) || '/placeholder.svg'}
             alt=""
