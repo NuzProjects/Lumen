@@ -38,7 +38,6 @@ export async function GET(
         })
       }
     } catch {
-      // try next candidate
     }
   }
 
