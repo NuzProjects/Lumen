@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import useSWR from 'swr'
 import { AlertTriangle, Search } from 'lucide-react'
 import { fetcher, type VideoSummary } from '@/lib/types'
-import { VideoGrid, VideoGridSkeleton } from '@/components/video-grid'
+import { VideoGrid, VideoGridSkeleton } from '@/components/video/video-grid'
 
 type Channel = {
   id: string

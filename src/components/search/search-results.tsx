@@ -6,7 +6,7 @@ import { useEffect } from 'react'
 import useSWR from 'swr'
 import { AlertTriangle, RefreshCw, SearchX } from 'lucide-react'
 import { fetcher, type VideoSummary } from '@/lib/types'
-import { VideoGrid, VideoGridSkeleton } from '@/components/video-grid'
+import { VideoGrid, VideoGridSkeleton } from '@/components/video/video-grid'
 
 export function SearchResults() {
   const params = useSearchParams()

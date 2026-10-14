@@ -5,7 +5,7 @@ import { useRef, useState } from 'react'
 import useSWR from 'swr'
 import { ArrowLeft, Loader2, AlertTriangle } from 'lucide-react'
 import { fetcher, type VideoDetail } from '@/lib/types'
-import { VideoPlayer } from '@/components/video-player'
+import { VideoPlayer } from './video-player'
 
 export function WatchView({ id }: { id: string }) {
   const { data, error, isLoading } = useSWR<VideoDetail>(

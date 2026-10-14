@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { SiteHeader } from '@/components/site-header'
-import { WatchView } from '@/components/watch-view'
+import { SiteHeader } from '@/components/layout/site-header'
+import { WatchView } from '@/components/video/watch-view'
 
 export default async function WatchPage({
   params,

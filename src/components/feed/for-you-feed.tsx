@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { AlertTriangle, RefreshCw, Search } from 'lucide-react'
 import { CATEGORY_LIST, fetcher, type VideoSummary } from '@/lib/types'
-import { VideoGrid, VideoGridSkeleton } from '@/components/video-grid'
+import { VideoGrid, VideoGridSkeleton } from '@/components/video/video-grid'
 
 const feedKey = (cat: string, topics: string[]) => `/api/feed?category=${encodeURIComponent(cat)}${topics.length ? `&topics=${encodeURIComponent(topics.join(','))}` : ''}`
 

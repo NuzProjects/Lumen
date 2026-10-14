@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
-import { SiteHeader } from '@/components/site-header'
-import { SearchResults } from '@/components/search-results'
-import { VideoGridSkeleton } from '@/components/video-grid'
+import { SiteHeader } from '@/components/layout/site-header'
+import { SearchResults } from '@/components/search/search-results'
+import { VideoGridSkeleton } from '@/components/video/video-grid'
 
 export default function SearchPage() {
   return (

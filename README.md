@@ -48,14 +48,14 @@
 
 4. Build and start the container:
    ```bash
-   docker compose up --build -d
+   docker compose -f docker/compose.yaml up --build -d
    ```
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 To stop the container:
 ```bash
-docker compose down
+docker compose -f docker/compose.yaml down
 ```
 
 ---

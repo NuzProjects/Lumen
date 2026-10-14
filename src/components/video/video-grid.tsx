@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { type VideoSummary } from '@/lib/types'
-import { VideoCard, VideoCardSkeleton } from '@/components/video-card'
+import { VideoCard, VideoCardSkeleton } from './video-card'
 
 const BATCH_SIZE = 8
 

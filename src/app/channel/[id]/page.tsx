@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { SiteHeader } from '@/components/site-header'
-import { ChannelView } from '@/components/channel-view'
+import { SiteHeader } from '@/components/layout/site-header'
+import { ChannelView } from '@/components/channel/channel-view'
 
 export default async function ChannelPage({
   params,

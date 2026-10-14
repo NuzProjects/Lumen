@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { SiteHeader } from '@/components/site-header'
-import { ShortsFeed } from '@/components/shorts-feed'
+import { SiteHeader } from '@/components/layout/site-header'
+import { ShortsFeed } from '@/components/feed/shorts-feed'
 
 export default function ShortsPage() {
   return (

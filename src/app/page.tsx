@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { SiteHeader } from '@/components/site-header'
-import { ForYouFeed } from '@/components/for-you-feed'
+import { SiteHeader } from '@/components/layout/site-header'
+import { ForYouFeed } from '@/components/feed/for-you-feed'
 
 export default function Page() {
   return (
