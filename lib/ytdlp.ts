@@ -4,14 +4,14 @@ import { getInvidiousVideo, searchInvidious } from '@/lib/invidious'
 import { getYouTubeChannelProfile, searchYouTubeVideos } from '@/lib/youtube-api'
 import { cached } from '@/lib/cache'
 
-// yt-dlp may live in a few places depending on the environment.
+
 const YTDLP_CANDIDATES = [
   process.env.YTDLP_PATH,
   process.platform === 'win32'
     ? join(process.cwd(), 'tools', 'yt-dlp.exe')
     : undefined,
-  // On Windows, yt-dlp is normally installed as a command on PATH. The Unix
-  // locations below do not exist and previously prevented that fallback.
+
+
   process.platform === 'win32' ? 'yt-dlp' : undefined,
   '/usr/local/bin/yt-dlp',
   '/usr/bin/yt-dlp',
@@ -19,8 +19,8 @@ const YTDLP_CANDIDATES = [
 ].filter(Boolean) as string[]
 
 let cachedBin: string | null = null
-// Allow a few workers for a self-hosted instance. Cached requests still bypass
-// this queue, and the cap keeps upstream bursts under control.
+
+
 const MAX_CONCURRENT_REQUESTS = Math.min(
   4,
   Math.max(1, Number.parseInt(process.env.YTDLP_CONCURRENCY || '3', 10) || 3),
@@ -48,7 +48,7 @@ function releaseRequestSlot(): void {
 
 async function resolveBin(): Promise<string> {
   if (cachedBin) return cachedBin
-  // Just use the first candidate; spawn errors are handled by callers.
+
   cachedBin = YTDLP_CANDIDATES[0]
   return cachedBin
 }
@@ -58,10 +58,7 @@ export interface RunOptions {
   maxBuffer?: number
 }
 
-/**
- * Run yt-dlp with the given args and return stdout.
- * Rejects on non-zero exit or spawn failure.
- */
+
 export async function runYtDlp(
   args: string[],
   opts: RunOptions = {},
@@ -69,7 +66,7 @@ export async function runYtDlp(
   const bin = await resolveBin()
   const { timeoutMs = 25_000, maxBuffer = 12 * 1024 * 1024 } = opts
 
-  // Args applied to every call to improve reliability from datacenter IPs.
+
   const baseArgs = [
     '--no-warnings',
     '--no-playlist',
@@ -80,8 +77,7 @@ export async function runYtDlp(
     '15',
   ]
 
-  // Optional: supply a YouTube session to defeat bot detection on cloud IPs.
-  // Set YTDLP_COOKIES_FILE to a path, or YTDLP_PROXY to a residential proxy URL.
+
   if (process.env.YTDLP_COOKIES_FILE) {
     baseArgs.push('--cookies', process.env.YTDLP_COOKIES_FILE)
   }
@@ -200,8 +196,8 @@ function fmtUploaded(
 
 function bestThumb(entry: any): string {
   const id = entry.id
-  // Prefer proxied YouTube thumbnail (i.ytimg is usually not blocked at schools,
-  // but we proxy it anyway via the client for consistency).
+
+
   if (id) return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
   if (Array.isArray(entry.thumbnails) && entry.thumbnails.length) {
     return entry.thumbnails[entry.thumbnails.length - 1].url
@@ -232,9 +228,7 @@ export function normalizeEntry(entry: any): VideoSummary {
   }
 }
 
-/**
- * Search YouTube via yt-dlp and return lightweight summaries.
- */
+
 export async function search(
   query: string,
   limit = 20,
@@ -258,7 +252,7 @@ export async function search(
       const entry = JSON.parse(trimmed)
       if (entry && entry.id) results.push(normalizeEntry(entry))
     } catch {
-      // ignore malformed lines
+
     }
   }
   return results
@@ -328,9 +322,7 @@ export async function getChannel(id: string, name?: string): Promise<ChannelInfo
   }
 }
 
-/**
- * Fetch full metadata + a playable progressive stream URL for a video id.
- */
+
 export async function getVideo(id: string): Promise<StreamInfo> {
   return cached(`video:${id}`, 10 * 60_000, () => getVideoUncached(id))
 }
@@ -345,7 +337,7 @@ async function getVideoUncached(id: string): Promise<StreamInfo> {
 
   const base = normalizeEntry(data)
 
-  // Collect progressive (audio+video) mp4 formats that a <video> tag can play.
+
   const progressive = (data.formats || [])
     .filter(
       (f: any) =>
@@ -363,7 +355,7 @@ async function getVideoUncached(id: string): Promise<StreamInfo> {
     }))
     .sort((a: any, b: any) => (b.height ?? 0) - (a.height ?? 0))
 
-  // Prefer 720p-ish progressive for reliability, else best available.
+
   const preferred =
     progressive.find((f: any) => f.height && f.height <= 720) ||
     progressive[0] ||
