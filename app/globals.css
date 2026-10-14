@@ -2,7 +2,7 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* Shorts is an immersive, self-contained viewer. */
+
 body:has(.shorts-page) > footer {
   display: none;
 }
@@ -93,7 +93,7 @@ body:has(.shorts-page) > footer {
     mask-image: radial-gradient(120% 100% at 50% 0%, black 40%, transparent 100%);
   }
 
-  /* entrance animations */
+
   @keyframes fade-rise {
     from {
       opacity: 0;
