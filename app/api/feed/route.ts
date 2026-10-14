@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-// Curated topics that power the "For You" feed.
+
 export const CATEGORIES: Record<string, string[]> = {
   'For You': [
     'trending educational videos',
@@ -43,13 +43,13 @@ export async function GET(req: NextRequest) {
     .slice(0, 4)
 
   try {
-    // Keep For You fresh while sharing category lookups between visitors.
+
     const candidates = await cached(`feed:v7:${category}:${interests.join('|').toLowerCase()}`, category === 'For You' ? 5 * 60_000 : 15 * 60_000, async () => {
       if (category === 'For You') {
         const popular = await getPopularYouTubeVideos(50)
         if (popular?.length) {
-          // Search both a watched creator and the watched video's subject.
-          // This keeps a few direct matches while surfacing related creators.
+
+
           const personalBatches = await Promise.allSettled(interests.map((topic) => search(topic, 12)))
           const personalLists = personalBatches
             .filter((batch): batch is PromiseFulfilledResult<VideoSummary[]> => batch.status === 'fulfilled')
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
           return popular as VideoSummary[]
         }
       }
-      // Query a few topics in parallel and interleave the results.
+
       const picked = shuffle(queries).slice(0, 3)
       const batches = await Promise.allSettled(picked.map((q) => search(q, 8)))
 
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
         .filter((b) => b.status === 'fulfilled')
         .map((b) => (b as PromiseFulfilledResult<VideoSummary[]>).value)
 
-      // Round-robin interleave for variety.
+
       const maxLen = Math.max(0, ...lists.map((l) => l.length))
       for (let i = 0; i < maxLen; i++) {
         for (const list of lists) {
@@ -104,8 +104,7 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Keep the upstream candidate pool warm, but vary the visible For You
-    // selection on every request so a reload is not locked to one feed.
+
     const results = category === 'For You' ? shuffle(candidates).slice(0, 24) : candidates
 
     return NextResponse.json(
