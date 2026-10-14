@@ -152,7 +152,7 @@ const SHORTS_QUERIES = [
   'art shorts', 'animals shorts', 'coding shorts', 'sports shorts',
 ]
 
-/** A fresh, randomly themed set of videos that YouTube classifies as short. */
+
 export async function getRandomYouTubeShorts(limit = 18, interests: string[] = []): Promise<YouTubeVideoSummary[] | null> {
   const key = process.env.YOUTUBE_API_KEY
   if (!key) return null
@@ -161,8 +161,8 @@ export async function getRandomYouTubeShorts(limit = 18, interests: string[] = [
   searchUrl.searchParams.set('part', 'snippet')
   searchUrl.searchParams.set('type', 'video')
   searchUrl.searchParams.set('videoDuration', 'short')
-  // Recent view leaders are a better approximation of what is trending than
-  // the default relevance ordering, which often surfaces older Shorts.
+
+
   searchUrl.searchParams.set('order', 'viewCount')
   searchUrl.searchParams.set('publishedAfter', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
   searchUrl.searchParams.set('maxResults', String(Math.min(50, Math.max(limit * 2, 24))))
@@ -191,7 +191,7 @@ export async function getRandomYouTubeShorts(limit = 18, interests: string[] = [
       if (!id) return []
       const detail = byId.get(id)
       const duration = parseIsoDuration(detail?.contentDetails?.duration)
-      // Shorts can now be up to three minutes; exclude normal videos returned by the broad API filter.
+
       if (duration == null || duration > 180) return []
       const views = Number(detail?.statistics?.viewCount) || null
       return [{
