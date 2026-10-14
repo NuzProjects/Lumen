@@ -7,7 +7,7 @@ export const maxDuration = 300
 
 const ID_RE = /^[a-zA-Z0-9_-]{6,20}$/
 
-// Small in-memory cache so we don't re-run yt-dlp for every range request.
+
 const urlCache = new Map<string, { url: string; title: string; expires: number }>()
 
 async function resolveStreamUrl(id: string): Promise<{ url: string; title: string } | null> {
@@ -17,7 +17,7 @@ async function resolveStreamUrl(id: string): Promise<{ url: string; title: strin
   const video = await getVideo(id)
   if (!video.streamUrl) return null
 
-  // googlevideo urls carry their own expiry; cache for a conservative window.
+
   const resolved = { url: video.streamUrl, title: video.title, expires: Date.now() + 60 * 60 * 1000 }
   urlCache.set(id, resolved)
   return resolved
@@ -46,7 +46,7 @@ export async function GET(
 
   const range = req.headers.get('range')
   const upstreamHeaders: Record<string, string> = {
-    // Pretend to be a normal browser to keep googlevideo happy.
+
     'User-Agent':
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
   }
@@ -61,7 +61,7 @@ export async function GET(
   }
 
   if (!upstream.ok && upstream.status !== 206) {
-    // Cached url may have expired — bust cache so next try re-resolves.
+
     urlCache.delete(id)
     return new NextResponse('Upstream error', { status: 502 })
   }
