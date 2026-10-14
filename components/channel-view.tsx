@@ -52,7 +52,7 @@ export function ChannelView({ id, name }: { id: string; name: string }) {
           <header className="mb-8 overflow-hidden rounded-2xl border border-border bg-card">
             {data.banner && (
               <div className="h-40 sm:h-52">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                
                 <img
                   src={data.banner}
                   alt=""
@@ -64,7 +64,6 @@ export function ChannelView({ id, name }: { id: string; name: string }) {
             <div className={`relative px-5 pb-6 sm:px-7 ${data.banner ? '' : 'pt-6'}`}>
               <span className={`${data.banner ? '-mt-10 sm:-mt-12' : ''} grid h-20 w-20 place-items-center overflow-hidden rounded-full border-4 border-card bg-secondary text-3xl font-semibold text-foreground sm:h-24 sm:w-24`}>
                 {data.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={data.avatar} alt="" className="h-full w-full object-cover" />
                 ) : (
                   data.name.slice(0, 1).toUpperCase()
